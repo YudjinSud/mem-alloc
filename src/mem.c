@@ -30,9 +30,7 @@ void mem_init() {
 	first_free->next = NULL;
 
 	gbl_allocator->first_libre = first_free;
-
-	
-
+    gbl_allocator->first_occupied = NULL;
 
 	printf("%p\n",gbl_allocator);
 	printf("%p\n",first_free);
@@ -77,10 +75,21 @@ void mem_free(void *zone) {
 //-------------------------------------------------------------
 // Itérateur(parcours) sur le contenu de l'allocateur
 // mem_show
-//-------------------------------------------------------------
+//-------------------------------------------------------------}
 void mem_show(void (*print)(void *, size_t, int free)) {
-    //TODO: implement
-	assert(! "NOT IMPLEMENTED !");
+
+    mem_free_block_s* head_libre = gbl_allocator->first_libre;
+    mem_block_occupied *head_occupied = gbl_allocator->first_occupied;
+
+    while(head_libre || head_occupied) {
+        if (head_occupied && head_libre && (int*) head_libre > (int*) head_occupied) {
+            print(head_occupied, head_occupied->size_data, 0);
+            head_occupied = (mem_block_occupied *) head_occupied->next;
+        } else if (head_libre) {
+            print(head_libre, head_libre->size_data, 1);
+            head_libre = (mem_free_block_s *) head_libre->next;
+        }
+    }
 }
 
 //-------------------------------------------------------------

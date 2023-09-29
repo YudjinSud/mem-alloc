@@ -19,12 +19,14 @@ typedef struct {
 //Definie la structure the bloc libre
 typedef struct mem_free_block_s mem_free_block_t;
 
-struct mem_block_occupee {
+typedef struct {
     size_t size_data;
-};
+    struct mem_block_occupied* next;
+} mem_block_occupied;
 
 struct mem_allocator_s {
     mem_free_block_s* first_libre;
+    mem_block_occupied* first_occupied;
 };
 /* -----------------------------------------------*/
 /* Interface de gestion de votre allocateur       */
