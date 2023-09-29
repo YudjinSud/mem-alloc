@@ -17,7 +17,7 @@
  * If already init it will re-init.
 **/
 void mem_init() {
-    //TODO: implement
+	//allocator = mem_space_get_addr();
 	assert(! "NOT IMPLEMENTED !");
 }
 

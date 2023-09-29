@@ -13,6 +13,18 @@
 //Definie la structure the bloc libre
 typedef struct mem_free_block_s mem_free_block_t;
 
+struct {     
+    size_t size_data;
+    struct mem_free_block_s* next;
+} mem_free_block_s;
+
+struct mem_block_occupee {
+    size_t size_data;
+};
+
+struct allocator {
+    struct mem_free_block_s* first_libre;
+};
 /* -----------------------------------------------*/
 /* Interface de gestion de votre allocateur       */
 /* -----------------------------------------------*/
