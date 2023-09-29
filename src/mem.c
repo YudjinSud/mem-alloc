@@ -9,6 +9,7 @@
 #include "mem_os.h"
 #include <assert.h>
 
+struct mem_allocator_s * gbl_allocator = NULL;
 //-------------------------------------------------------------
 // mem_init
 //-------------------------------------------------------------
@@ -17,8 +18,27 @@
  * If already init it will re-init.
 **/
 void mem_init() {
-	//allocator = mem_space_get_addr();
-	assert(! "NOT IMPLEMENTED !");
+	// ou on place l'info alloc
+	gbl_allocator = mem_space_get_addr();
+
+	//Entete premier libre
+	mem_free_block_s* first_free = mem_space_get_addr() + 1;
+	// Calcul size_data du premier bloc
+	int size_data_first_free = mem_space_get_size() - sizeof(mem_free_block_s*) - sizeof(mem_free_block_s*) + sizeof(size_t);
+
+	first_free->size_data = size_data_first_free;
+	first_free->next = NULL;
+
+	gbl_allocator->first_libre = first_free;
+
+	
+
+
+	printf("%p\n",gbl_allocator);
+	printf("%p\n",first_free);
+	printf("%d\n",size_data_first_free);
+
+	
 }
 
 //-------------------------------------------------------------

@@ -10,20 +10,21 @@
 //include stdlib pour definition du type size_t
 #include <stdlib.h>
 
-//Definie la structure the bloc libre
-typedef struct mem_free_block_s mem_free_block_t;
-
-struct {     
+typedef struct {     
     size_t size_data;
     struct mem_free_block_s* next;
 } mem_free_block_s;
+
+
+//Definie la structure the bloc libre
+typedef struct mem_free_block_s mem_free_block_t;
 
 struct mem_block_occupee {
     size_t size_data;
 };
 
-struct allocator {
-    struct mem_free_block_s* first_libre;
+struct mem_allocator_s {
+    mem_free_block_s* first_libre;
 };
 /* -----------------------------------------------*/
 /* Interface de gestion de votre allocateur       */
