@@ -24,16 +24,15 @@ void mem_init() {
     gbl_allocator = mem_space_get_addr();
 
     //Entete premier libre
-    mem_block_t first_free = (mem_block_t) (gbl_allocator + GBL_ALLOC_SIZE);
+    mem_free_block_t *first_free = (mem_free_block_t *) (gbl_allocator + 1);
 
     //Calcul size_data du premier bloc
-    size_t size_data_first_free = mem_space_get_size() - BLOCK_SIZE - GBL_ALLOC_SIZE;
+    size_t size_data_first_free = mem_space_get_size() - BLOCK_FREE_SIZE - GBL_ALLOC_SIZE;
 
-    first_free->size_data = size_data_first_free;
+    first_free->size_total = size_data_first_free;
     first_free->next = NULL;
-    first_free->free = 1;
 
-    gbl_allocator->first = first_free;
+    gbl_allocator->first_free_block = first_free;
 
     //Initialisation de la fonction de recherche par défault
     mem_set_fit_handler(mem_first_fit);
@@ -42,16 +41,16 @@ void mem_init() {
     printf("%lu\n", (unsigned long) first_free);
     printf("%zu\n", size_data_first_free);
 }
-
-void split_block(mem_block_t block, size_t size) {
-    mem_block_t new_block;
-    new_block = (mem_block_t) block->data + size;
-    new_block->size_data = block->size_data - size - BLOCK_SIZE;
-    new_block->next = block->next;
-    new_block->free = 1;
-    block->size_data = size;
-    block->next = new_block;
-}
+//
+//void split_block(mem_block_t block, size_t size) {
+//    mem_block_t new_block;
+//    new_block = (mem_block_t) block->data + block->size_data;
+//    new_block->size_data = block->size_data - size - BLOCK_SIZE;
+//    new_block->next = block->next;
+//    new_block->free = 1;
+//    block->size_data = size;
+//    block->next = new_block;
+//}
 
 //-------------------------------------------------------------
 // mem_alloc
@@ -60,18 +59,19 @@ void split_block(mem_block_t block, size_t size) {
  * Allocate a bloc of the given size.
 **/
 void *mem_alloc(size_t size) {
-    mem_block_t b, first_free = gbl_allocator->first;
+    mem_free_block_t *b, *first_free = gbl_allocator->first_free_block;
     size_t s = align4(size);
 
     b = gbl_allocator->fit_function(first_free, s);
     if (b) {
-        if (b->size_data - s >= BLOCK_SIZE) {
-            split_block(b, s);
-        }
-        b->free = 0;
+//        if (b->size_total - s >= BLOCK_SIZE) {
+//            split_block(b, s);
+//        }
+//        b->free = 0;
     }
 
-    return b->data;
+//    return b->dat;
+    return NULL;
 }
 
 //-------------------------------------------------------------
@@ -94,15 +94,36 @@ void mem_free(void *zone) {
     assert(!"NOT IMPLEMENTED !");
 }
 
+int mem_is_in_free(void *block) {
+    mem_free_block_t *head = gbl_allocator->first_free_block;
+    while (head) {
+        if (head == block) {
+            return 1;
+        }
+        head = head->next;
+    }
+    return 0;
+}
+
 //-------------------------------------------------------------
 // Itérateur(parcours) sur le contenu de l'allocateur
 // mem_show
 //-------------------------------------------------------------}
 void mem_show(void (*print)(void *, size_t, int free)) {
-    mem_block_t head = gbl_allocator->first;
-    while (head) {
-        print(head, head->size_data, head->free);
-        head = head->next;
+    void *head = gbl_allocator->first_free_block;
+//    void *old_head = NULL;
+
+    int libre = 1;
+    int prise = 0;
+
+    while ((head + BLOCK_FREE_SIZE  < mem_space_get_addr() + mem_space_get_size())) {
+        if (mem_is_in_free(head)) {
+            print(head, ((mem_free_block_t *) head)->size_total, libre);
+            head += ((mem_free_block_t *) head)->size_total;
+        } else {
+            print(head, ((mem_allocated_block_t *) head)->size_total, prise);
+            head += ((mem_allocated_block_t *) head)->size_total;
+        }
     }
 }
 
@@ -116,25 +137,25 @@ void mem_set_fit_handler(mem_fit_function_t *mff) {
 //-------------------------------------------------------------
 // Stratégies d'allocation
 //-------------------------------------------------------------
-mem_block_t mem_first_fit(mem_block_t first_free_block, size_t wanted_size) {
+mem_free_block_t *mem_first_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
 
-    while (first_free_block && !(first_free_block->free &&
-    first_free_block->size_data >= wanted_size)) {
-        first_free_block = first_free_block->next;
-    }
-
+//    while (first_free_block && !(first_free_block->free &&
+//    first_free_block->size_data >= wanted_size)) {
+//        first_free_block = first_free_block->next;
+//    }
+//
     return first_free_block;
 }
 
 //-------------------------------------------------------------
-mem_block_t mem_best_fit(mem_block_t first_free_block, size_t wanted_size) {
+mem_free_block_t *mem_best_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
     //TODO: implement
     assert(!"NOT IMPLEMENTED !");
     return NULL;
 }
 
 //-------------------------------------------------------------
-mem_block_t mem_worst_fit(mem_block_t first_free_block, size_t wanted_size) {
+mem_free_block_t *mem_worst_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
     //TODO: implement
     assert(!"NOT IMPLEMENTED !");
     return NULL;
