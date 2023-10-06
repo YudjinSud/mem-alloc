@@ -35,3 +35,4 @@ tests_c/test_init
 .DS_Store
 .idea
 tests/.DS_Store
+Makefile
