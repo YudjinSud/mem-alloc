@@ -60,7 +60,7 @@ void split_block(mem_block_t block, size_t size) {
  * Allocate a bloc of the given size.
 **/
 void *mem_alloc(size_t size) {
-    mem_block_t b, first_free = NULL;
+    mem_block_t b, first_free = gbl_allocator->first;
     size_t s = align4(size);
 
     b = gbl_allocator->fit_function(first_free, s);
@@ -102,7 +102,7 @@ void mem_show(void (*print)(void *, size_t, int free)) {
     mem_block_t head = gbl_allocator->first;
     while (head) {
         print(head, head->size_data, head->free);
-        head = (mem_block_t) head->next;
+        head = head->next;
     }
 }
 
@@ -118,13 +118,12 @@ void mem_set_fit_handler(mem_fit_function_t *mff) {
 //-------------------------------------------------------------
 mem_block_t mem_first_fit(mem_block_t first_free_block, size_t wanted_size) {
 
-    mem_block_t b = (mem_block_t) gbl_allocator->first;
-    while (b && !(b->free && b->size_data >= wanted_size)) {
-        first_free_block = b;
-        b = b->next;
+    while (first_free_block && !(first_free_block->free &&
+    first_free_block->size_data >= wanted_size)) {
+        first_free_block = first_free_block->next;
     }
 
-    return b;
+    return first_free_block;
 }
 
 //-------------------------------------------------------------
