@@ -36,3 +36,4 @@ tests_c/test_init
 .idea
 tests/.DS_Store
 Makefile
+./Makefile
