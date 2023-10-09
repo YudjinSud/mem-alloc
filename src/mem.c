@@ -70,9 +70,9 @@ mem_free_block_t* get_previous_free_block(mem_free_block_t *first_free_block, me
  * Allocate a bloc of the given size.
 **/
 void *mem_alloc(size_t size) {
-    //mem_free_block_t *first_free = gbl_allocator->first_free_block;
-    mem_allocated_block_t *new_block = NULL;
     /*
+    mem_free_block_t *first_free = gbl_allocator->first_free_block;
+    mem_allocated_block_t *new_block = NULL;
     mem_free_block_t *chosen_block = NULL;
     mem_free_block_t *next_free_block = NULL;
     mem_free_block_t *previous_free_block = NULL;
@@ -82,9 +82,8 @@ void *mem_alloc(size_t size) {
     //mem_fit_function_t* fit_function;
     size_t s = align4(size);
     if (first_free != NULL) {
-        //fit_function = gbl_allocator->fit_function;
         //TODO cas par cas des fit fonctions
-        chosen_block = mem_first_fit(first_free,s);
+        chosen_block = gbl_allocator->fit_function(first_free,s);
         next_free_block = chosen_block->next;
         free_block_size = chosen_block->size_total;
         previous_free_block = get_previous_free_block(first_free,chosen_block);
@@ -96,8 +95,10 @@ void *mem_alloc(size_t size) {
         new_block->size_total = size + BLOCK_ALLOCATED_SIZE;
 
     }
-*/
+
     return new_block;
+    */
+    return NULL;
 }
 
 //-------------------------------------------------------------
