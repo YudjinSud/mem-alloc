@@ -9,7 +9,7 @@
 
 #define align4(x) (((((x)-1)>>2)<<2)+4)
 #define BLOCK_FREE_SIZE sizeof(struct mem_free_block_s)
-#define BLOCK__SIZE sizeof(struct mem_free_block_s)
+#define BLOCK_ALLOCATED_SIZE sizeof(struct mem_allocated_block_s)
 #define GBL_ALLOC_SIZE sizeof(struct mem_allocator_s)
 
 //include stdlib pour definition du type size_t

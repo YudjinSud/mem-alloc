@@ -52,6 +52,17 @@ void mem_init() {
 //    block->next = new_block;
 //}
 
+mem_free_block_t* get_previous_free_block(mem_free_block_t *first_free_block, mem_free_block_t *target) {
+    mem_free_block_t *current_block = first_free_block;
+    while (current_block != NULL) {
+        if (current_block->next == target) {
+            return current_block;
+        }
+        current_block = current_block->next;
+    }
+    return NULL;
+}
+
 //-------------------------------------------------------------
 // mem_alloc
 //-------------------------------------------------------------
@@ -59,19 +70,33 @@ void mem_init() {
  * Allocate a bloc of the given size.
 **/
 void *mem_alloc(size_t size) {
-    mem_free_block_t *b, *first_free = gbl_allocator->first_free_block;
+    mem_free_block_t *first_free = gbl_allocator->first_free_block;
+    mem_allocated_block_t *new_block = NULL;
+    mem_free_block_t *chosen_block = NULL;
+    mem_free_block_t *next_free_block = NULL;
+    mem_free_block_t *previous_free_block = NULL;
+    mem_free_block_t *new_free_block = NULL;
+/*
+    size_t free_block_size;
+    //mem_fit_function_t* fit_function;
     size_t s = align4(size);
+    if (first_free != NULL) {
+        //fit_function = gbl_allocator->fit_function;
+        //TODO cas par cas des fit fonctions
+        chosen_block = mem_first_fit(first_free,s);
+        next_free_block = chosen_block->next;
+        free_block_size = chosen_block->size_total;
+        previous_free_block = get_previous_free_block(first_free,chosen_block);
+        new_free_block->next = next_free_block;
+        new_free_block->size_total = free_block_size - s;
+        previous_free_block->next = new_free_block;
 
-    b = gbl_allocator->fit_function(first_free, s);
-    if (b) {
-//        if (b->size_total - s >= BLOCK_SIZE) {
-//            split_block(b, s);
-//        }
-//        b->free = 0;
+        new_block = (mem_allocated_block_t *) chosen_block;
+        new_block->size_total = size + BLOCK_ALLOCATED_SIZE;
+
     }
-
-//    return b->dat;
-    return NULL;
+*/
+    return new_block;
 }
 
 //-------------------------------------------------------------
@@ -138,13 +163,11 @@ void mem_set_fit_handler(mem_fit_function_t *mff) {
 // Stratégies d'allocation
 //-------------------------------------------------------------
 mem_free_block_t *mem_first_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-
-//    while (first_free_block && !(first_free_block->free &&
-//    first_free_block->size_data >= wanted_size)) {
-//        first_free_block = first_free_block->next;
-//    }
-//
-    return first_free_block;
+    mem_free_block_t* current_free_block = first_free_block;
+    while (current_free_block != NULL && !(current_free_block->size_total >= wanted_size)) {
+        current_free_block = current_free_block->next;
+    }
+    return current_free_block;
 }
 
 //-------------------------------------------------------------
