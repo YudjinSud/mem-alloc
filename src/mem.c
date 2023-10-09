@@ -173,14 +173,34 @@ mem_free_block_t *mem_first_fit(mem_free_block_t *first_free_block, size_t wante
 
 //-------------------------------------------------------------
 mem_free_block_t *mem_best_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-    //TODO: implement
-    assert(!"NOT IMPLEMENTED !");
-    return NULL;
+    mem_free_block_t* current_free_block = first_free_block;
+    mem_free_block_t* best_free_block = current_free_block;
+    int min = first_free_block->size_total;
+    while (current_free_block != NULL) {
+        if (current_free_block->size_total >= wanted_size) {
+            if (min > current_free_block->size_total) {
+                min = current_free_block->size_total;
+                best_free_block = current_free_block;
+            }
+        }
+        current_free_block = current_free_block->next;
+    }
+    return best_free_block;
 }
 
 //-------------------------------------------------------------
 mem_free_block_t *mem_worst_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-    //TODO: implement
-    assert(!"NOT IMPLEMENTED !");
-    return NULL;
+    mem_free_block_t* current_free_block = first_free_block;
+    mem_free_block_t* worst_free_block = current_free_block;
+    int max = first_free_block->size_total;
+    while (current_free_block != NULL) {
+        if (current_free_block->size_total >= wanted_size) {
+            if (max < current_free_block->size_total) {
+                max = current_free_block->size_total;
+                worst_free_block = current_free_block;
+            }
+        }
+        current_free_block = current_free_block->next;
+    }
+    return worst_free_block;
 }
