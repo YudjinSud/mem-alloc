@@ -257,7 +257,7 @@ mem_free_block_t *mem_best_fit(mem_free_block_t *first_free_block, size_t wanted
         }
         current_free_block = current_free_block->next;
     }
-    return best_free_block;
+    return best_free_block->size_total >= wanted_size ? best_free_block : NULL;
 }
 
 //-------------------------------------------------------------
@@ -274,5 +274,5 @@ mem_free_block_t *mem_worst_fit(mem_free_block_t *first_free_block, size_t wante
         }
         current_free_block = current_free_block->next;
     }
-    return worst_free_block;
+    return worst_free_block->size_total >= wanted_size ? worst_free_block : NULL;
 }
