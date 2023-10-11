@@ -7,7 +7,7 @@
 #ifndef MEM_OS_H
 #define MEM_OS_H
 
-#define align4(x) (((((x)-1)>>2)<<2)+4)
+#define align8(x) (((((x)-1)>>3)<<3)+8)
 #define BLOCK_FREE_SIZE sizeof(struct mem_free_block_s)
 #define BLOCK_ALLOCATED_SIZE sizeof(struct mem_allocated_block_s)
 #define GBL_ALLOC_SIZE sizeof(struct mem_allocator_s)
@@ -18,20 +18,21 @@
 typedef struct mem_free_block_s mem_free_block_t;
 typedef struct mem_allocated_block_s mem_allocated_block_t;
 
+typedef struct mem_allocator_s *mem_allocator_ptr;
 
-struct mem_free_block_s{
+typedef mem_free_block_t *(mem_fit_function_t)(mem_free_block_t *, size_t);
+
+struct mem_free_block_s {
     size_t size_total;
-    mem_free_block_t* next;
+    mem_free_block_t *next;
 };
 
 struct mem_allocated_block_s {
     size_t size_total;
+
+    // (magic) pointer to the malloc'ed address to be sure that we can free it
+    void* ptr;
 };
-
-
-typedef struct mem_allocator_s* mem_allocator_t;
-
-typedef mem_free_block_t* (mem_fit_function_t)(mem_free_block_t*, size_t);
 
 struct mem_allocator_s {
     mem_free_block_t *first_free_block;
@@ -39,6 +40,7 @@ struct mem_allocator_s {
     // i.e. function for searching appropriate block
     mem_fit_function_t *fit_function;
 };
+
 /* -----------------------------------------------*/
 /* Interface de gestion de votre allocateur       */
 /* -----------------------------------------------*/
