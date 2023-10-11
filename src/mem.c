@@ -10,7 +10,7 @@
 #include <assert.h>
 
 // the very beginning of the Data to be defined later
-mem_allocator_t gbl_allocator = NULL;
+mem_allocator_ptr gbl_allocator = NULL;
 
 //-------------------------------------------------------------
 // mem_init
@@ -41,18 +41,20 @@ void mem_init() {
     printf("%lu\n", (unsigned long) first_free);
     printf("%zu\n", size_data_first_free);
 }
-//
-//void split_block(mem_block_t block, size_t size) {
-//    mem_block_t new_block;
-//    new_block = (mem_block_t) block->data + block->size_data;
-//    new_block->size_data = block->size_data - size - BLOCK_SIZE;
-//    new_block->next = block->next;
-//    new_block->free = 1;
-//    block->size_data = size;
-//    block->next = new_block;
-//}
 
-mem_free_block_t* get_previous_free_block(mem_free_block_t *first_free_block, mem_free_block_t *target) {
+
+mem_free_block_t* mem_split_block(mem_free_block_t *block, size_t size) {
+    mem_free_block_t *new_free_block;
+    mem_free_block_t *next = block->next;
+    new_free_block = (mem_free_block_t*) (( (char*) ((mem_allocated_block_t *) block + 1) + size)) ;
+    new_free_block ->size_total = block->size_total - size - BLOCK_ALLOCATED_SIZE;
+    new_free_block->next = next;
+
+    block->size_total = size + BLOCK_ALLOCATED_SIZE;
+    return new_free_block;
+}
+
+mem_free_block_t *get_previous_free_block(mem_free_block_t *first_free_block, mem_free_block_t *target) {
     mem_free_block_t *current_block = first_free_block;
     while (current_block != NULL) {
         if (current_block->next == target) {
@@ -70,35 +72,27 @@ mem_free_block_t* get_previous_free_block(mem_free_block_t *first_free_block, me
  * Allocate a bloc of the given size.
 **/
 void *mem_alloc(size_t size) {
-    /*
     mem_free_block_t *first_free = gbl_allocator->first_free_block;
-    mem_allocated_block_t *new_block = NULL;
-    mem_free_block_t *chosen_block = NULL;
-    mem_free_block_t *next_free_block = NULL;
-    mem_free_block_t *previous_free_block = NULL;
-    mem_free_block_t *new_free_block = NULL;
+    mem_free_block_t *fitting_block = NULL;
 
-    size_t free_block_size;
-    //mem_fit_function_t* fit_function;
-    size_t s = align4(size);
-    if (first_free != NULL) {
-        //TODO cas par cas des fit fonctions
-        chosen_block = gbl_allocator->fit_function(first_free,s);
-        next_free_block = chosen_block->next;
-        free_block_size = chosen_block->size_total;
-        previous_free_block = get_previous_free_block(first_free,chosen_block);
-        new_free_block->next = next_free_block;
-        new_free_block->size_total = free_block_size - s;
-        previous_free_block->next = new_free_block;
+    mem_allocated_block_t *allocated_block = NULL;
 
-        new_block = (mem_allocated_block_t *) chosen_block;
-        new_block->size_total = size + BLOCK_ALLOCATED_SIZE;
+    size_t aligned_size = align8(size);
 
+    if (first_free) {
+        fitting_block = gbl_allocator->fit_function(first_free, aligned_size);
+        allocated_block = (mem_allocated_block_t *) fitting_block;
+        gbl_allocator->first_free_block = fitting_block->next;
+
+        // can split founded block into smaller
+        if (fitting_block->size_total > aligned_size + BLOCK_ALLOCATED_SIZE) {
+            gbl_allocator->first_free_block = mem_split_block(fitting_block, aligned_size);
+        }
     }
 
-    return new_block;
-    */
-    return NULL;
+    void* res = allocated_block + 1;
+
+    return res;
 }
 
 //-------------------------------------------------------------
@@ -137,13 +131,13 @@ int mem_is_in_free(void *block) {
 // mem_show
 //-------------------------------------------------------------}
 void mem_show(void (*print)(void *, size_t, int free)) {
-    void *head = gbl_allocator->first_free_block;
+    void *head = gbl_allocator + 1;
 //    void *old_head = NULL;
 
     int libre = 1;
     int prise = 0;
 
-    while ((head + BLOCK_FREE_SIZE  < mem_space_get_addr() + mem_space_get_size())) {
+    while ((head + BLOCK_FREE_SIZE < mem_space_get_addr() + mem_space_get_size())) {
         if (mem_is_in_free(head)) {
             print(head, ((mem_free_block_t *) head)->size_total, libre);
             head += ((mem_free_block_t *) head)->size_total;
@@ -165,8 +159,8 @@ void mem_set_fit_handler(mem_fit_function_t *mff) {
 // Stratégies d'allocation
 //-------------------------------------------------------------
 mem_free_block_t *mem_first_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-    mem_free_block_t* current_free_block = first_free_block;
-    while (current_free_block != NULL && !(current_free_block->size_total >= wanted_size)) {
+    mem_free_block_t *current_free_block = first_free_block;
+    while (current_free_block != NULL && current_free_block->size_total < wanted_size) {
         current_free_block = current_free_block->next;
     }
     return current_free_block;
@@ -174,8 +168,8 @@ mem_free_block_t *mem_first_fit(mem_free_block_t *first_free_block, size_t wante
 
 //-------------------------------------------------------------
 mem_free_block_t *mem_best_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-    mem_free_block_t* current_free_block = first_free_block;
-    mem_free_block_t* best_free_block = current_free_block;
+    mem_free_block_t *current_free_block = first_free_block;
+    mem_free_block_t *best_free_block = current_free_block;
     int min = first_free_block->size_total;
     while (current_free_block != NULL) {
         if (current_free_block->size_total >= wanted_size) {
@@ -191,8 +185,8 @@ mem_free_block_t *mem_best_fit(mem_free_block_t *first_free_block, size_t wanted
 
 //-------------------------------------------------------------
 mem_free_block_t *mem_worst_fit(mem_free_block_t *first_free_block, size_t wanted_size) {
-    mem_free_block_t* current_free_block = first_free_block;
-    mem_free_block_t* worst_free_block = current_free_block;
+    mem_free_block_t *current_free_block = first_free_block;
+    mem_free_block_t *worst_free_block = current_free_block;
     int max = first_free_block->size_total;
     while (current_free_block != NULL) {
         if (current_free_block->size_total >= wanted_size) {
