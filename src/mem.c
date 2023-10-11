@@ -73,7 +73,9 @@ int mem_is_in_free(void *block) {
 mem_free_block_t *mem_get_previous_free_block(void *target) {
     mem_free_block_t *current_block = (mem_free_block_t *) (gbl_allocator->first_free_block);
     while (current_block != NULL && (void *) current_block < (void *) target) {
-        if ((void *) current_block->next >= target) {
+        if (current_block->next && (void *) current_block->next >= target) {
+            return current_block;
+        } else if (current_block->next == NULL && (void *)current_block < target) {
             return current_block;
         }
         current_block = current_block->next;
@@ -103,11 +105,15 @@ void *mem_alloc(size_t size) {
 
     mem_free_block_t *prev_free = mem_get_previous_free_block(fitting_block);
 
+    if (!fitting_block) return NULL;
+
     mem_free_block_t *next_free_block = fitting_block->next;
 
     // can split founded block into smaller
     if (fitting_block->size_total > aligned_size + BLOCK_ALLOCATED_SIZE + BLOCK_FREE_SIZE) {
         next_free_block = mem_split_block(fitting_block, aligned_size);
+    } else {
+        ((mem_allocated_block_t *) fitting_block)->ptr = (char *) (fitting_block) + BLOCK_ALLOCATED_SIZE;
     }
 
     if (prev_free) {
