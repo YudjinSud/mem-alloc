@@ -46,7 +46,7 @@ void mem_init() {
 mem_free_block_t *mem_split_block(mem_free_block_t *block, size_t size) {
     mem_free_block_t *new_free_block;
     mem_free_block_t *next = block->next;
-    new_free_block = (mem_free_block_t *) ((char *) (block) + BLOCK_ALLOCATED_SIZE + size);
+    new_free_block = (mem_free_block_t *) ((void *) (block) + BLOCK_ALLOCATED_SIZE + size);
     new_free_block->size_total = block->size_total - size - BLOCK_ALLOCATED_SIZE;
     new_free_block->next = next;
 
@@ -55,7 +55,7 @@ mem_free_block_t *mem_split_block(mem_free_block_t *block, size_t size) {
     block->size_total = size + BLOCK_ALLOCATED_SIZE;
 
     // will be used in free() for verifying
-    ((mem_allocated_block_t *) block)->ptr = (char *) (block) + BLOCK_ALLOCATED_SIZE;
+    ((mem_allocated_block_t *) block)->ptr = (void *) (block) + BLOCK_ALLOCATED_SIZE;
     return new_free_block;
 }
 
@@ -113,7 +113,7 @@ void *mem_alloc(size_t size) {
     if (fitting_block->size_total > aligned_size + BLOCK_ALLOCATED_SIZE + BLOCK_FREE_SIZE) {
         next_free_block = mem_split_block(fitting_block, aligned_size);
     } else {
-        ((mem_allocated_block_t *) fitting_block)->ptr = (char *) (fitting_block) + BLOCK_ALLOCATED_SIZE;
+        ((mem_allocated_block_t *) fitting_block)->ptr = (void *) (fitting_block) + BLOCK_ALLOCATED_SIZE;
     }
 
     if (prev_free) {
@@ -123,7 +123,7 @@ void *mem_alloc(size_t size) {
     }
 
     // +BLOCK_ALLOCATED_SIZE for header info of the allocated block (normally 16 bytes)
-    return (char *) (allocated_block) + BLOCK_ALLOCATED_SIZE;
+    return (void *) (allocated_block) + BLOCK_ALLOCATED_SIZE;
 }
 
 //-------------------------------------------------------------
@@ -166,7 +166,7 @@ int mem_is_valid_address(void *ptr) {
 
 void mem_fusion(void *block) {
     mem_free_block_t *to_free_block = (mem_free_block_t *) block;
-    mem_free_block_t *right_block = (mem_free_block_t *) ((char *) (block + to_free_block->size_total));
+    mem_free_block_t *right_block = (mem_free_block_t *) ((void *) (block + to_free_block->size_total));
 
     if (!mem_is_in_free(right_block)) return;
 
@@ -199,7 +199,7 @@ void mem_free(void *zone) {
     mem_fusion(freed_zone_block);
 
     // merge neighbour left block if is free also
-    if (prev_free_block && (char *) prev_free_block + prev_free_block->size_total == (void *) zone_block) {
+    if (prev_free_block && (void *) prev_free_block + prev_free_block->size_total == (void *) zone_block) {
         mem_fusion(prev_free_block);
     }
 }
